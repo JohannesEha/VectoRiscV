@@ -47,7 +47,7 @@ object AradexConfig{
     hardwareBreakpointCount = 0,
     cpuPlugins = ArrayBuffer( //DebugPlugin added by the toplevel
       new IBusSimplePlugin(
-        resetVector = 0x80000000l,
+        resetVector = 0x10000l,
         cmdForkOnSecondStage = true,
         cmdForkPersistence = false, //Required by the Xip controller
         prediction = NONE,
@@ -61,7 +61,7 @@ object AradexConfig{
         earlyInjection = false,
         bigEndian = bigEndian
       ),
-      new CsrPlugin(CsrPluginConfig.smallest(mtvecInit = 0x80000020l)),
+      new CsrPlugin(CsrPluginConfig.smallest(mtvecInit = 0x10020l)),
       new DecoderSimplePlugin(
         catchIllegalInstruction = false
       ),
@@ -75,12 +75,14 @@ object AradexConfig{
         executeInsertion = false
       ),
       new FullBarrelShifterPlugin,
-	  new MulDivIterativePlugin(
-        genMul = true,
-        genDiv = false,
-        mulUnrollFactor = 1,
-        divUnrollFactor = 1
-      ),
+	  new MulPlugin,
+	  new DivPlugin,
+	  // new MulDivIterativePlugin(
+        // genMul = true,
+        // genDiv = false,
+        // mulUnrollFactor = 1,
+        // divUnrollFactor = 1
+      // ),
       new HazardSimplePlugin(
         bypassExecute = false,			// true for higher speed
         bypassMemory = false,			// true
@@ -251,14 +253,14 @@ case class VpSoc(config : AradexConfig) extends Component{
       pipelinedMemoryBusConfig = pipelinedMemoryBusConfig,
       bigEndian = bigEndianDBus
     )
-    mainBusMapping += ram.io.bus -> (0x0001000l, onChipRamSize)
+    mainBusMapping += ram.io.bus -> (0x00010000l, onChipRamSize)
 
     val apbBridge = new PipelinedMemoryBusToApbBridge(
       VpSoc.apb3Config,
       pipelineBridge = pipelineApbBridge,
       pipelinedMemoryBusConfig = pipelinedMemoryBusConfig
     )
-    mainBusMapping += apbBridge.io.pipelinedMemoryBus -> (0x0002000l, 1 MB)
+    mainBusMapping += apbBridge.io.pipelinedMemoryBus -> (0x00020000l, 1 MB)
 
 	// user interface
 	val userInterface = PipelinedMemoryBusUserInterface(
@@ -266,7 +268,7 @@ case class VpSoc(config : AradexConfig) extends Component{
 	  pipelineBridge = pipelineUserIntf,
 	  pipelinedMemoryBusConfig = pipelinedMemoryBusConfig
     )
-	mainBusMapping += userInterface.io.pipelinedMemoryBus -> (0x0003000l, 1 kB)
+	mainBusMapping += userInterface.io.pipelinedMemoryBus -> (0x00030000l, 1 kB)
 
 	//DPRAM
 	val dpram = AradexPipelinedMemoryBusDPRam(
@@ -275,7 +277,7 @@ case class VpSoc(config : AradexConfig) extends Component{
       pipelinedMemoryBusConfig = pipelinedMemoryBusConfig,
       bigEndian = bigEndianDBus
 	)
-	mainBusMapping += dpram.io.bus -> (0x0004000l, dpRamSize)
+	mainBusMapping += dpram.io.bus -> (0x00040000l, dpRamSize)
 
     //******** APB peripherals *********
     val apbMapping = ArrayBuffer[(Apb3, SizeMapping)]()

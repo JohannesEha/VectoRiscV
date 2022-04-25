@@ -66,7 +66,7 @@ case class AradexPipelinedMemoryBusRam(onChipRamSize : BigInt, onChipRamHexFile 
   io.bus.cmd.ready := True
 
   if(onChipRamHexFile != null){
-    HexTools.initRam(ram, onChipRamHexFile, 0x0001000l)
+    HexTools.initRam(ram, onChipRamHexFile, 0x0010000l)
     if(bigEndian)
       // HexTools.initRam (incorrectly) assumes little endian byte ordering
       for((word, wordIndex) <- ram.initialContent.zipWithIndex)
