@@ -49,7 +49,7 @@ class AradexMasterArbiter(pipelinedMemoryBusConfig : PipelinedMemoryBusConfig, b
 }
 
 
-case class AradexPipelinedMemoryBusRam(onChipRamSize : BigInt, onChipRamHexFile : String, pipelinedMemoryBusConfig : PipelinedMemoryBusConfig, bigEndian : Boolean = false) extends Component{
+case class AradexPipelinedMemoryBusRam(onChipRamSize : BigInt, onChipRamHexFile : String, pipelinedMemoryBusConfig : PipelinedMemoryBusConfig, StartAddress : BigInt, bigEndian : Boolean = false) extends Component{
   val io = new Bundle{
     val bus = slave(PipelinedMemoryBus(pipelinedMemoryBusConfig))
   }
@@ -66,7 +66,7 @@ case class AradexPipelinedMemoryBusRam(onChipRamSize : BigInt, onChipRamHexFile 
   io.bus.cmd.ready := True
 
   if(onChipRamHexFile != null){
-    HexTools.initRam(ram, onChipRamHexFile, 0x0010000l)
+    HexTools.initRam(ram, onChipRamHexFile, StartAddress)
     if(bigEndian)
       // HexTools.initRam (incorrectly) assumes little endian byte ordering
       for((word, wordIndex) <- ram.initialContent.zipWithIndex)

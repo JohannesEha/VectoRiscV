@@ -247,13 +247,15 @@ case class VpSoc(config : AradexConfig) extends Component{
 
     //****** MainBus slaves ********
     val mainBusMapping = ArrayBuffer[(PipelinedMemoryBus,SizeMapping)]()
+    val ramStartAddress = 0x00010000l
     val ram = new AradexPipelinedMemoryBusRam(
       onChipRamSize = onChipRamSize,
       onChipRamHexFile = onChipRamHexFile,
       pipelinedMemoryBusConfig = pipelinedMemoryBusConfig,
+      ramStartAddress,
       bigEndian = bigEndianDBus
     )
-    mainBusMapping += ram.io.bus -> (0x00010000l, onChipRamSize)
+    mainBusMapping += ram.io.bus -> (ramStartAddress, onChipRamSize)
 
     val apbBridge = new PipelinedMemoryBusToApbBridge(
       VpSoc.apb3Config,
