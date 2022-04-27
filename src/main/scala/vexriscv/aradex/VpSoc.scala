@@ -262,7 +262,7 @@ case class VpSoc(config : AradexConfig) extends Component{
       pipelineBridge = pipelineApbBridge,
       pipelinedMemoryBusConfig = pipelinedMemoryBusConfig
     )
-    mainBusMapping += apbBridge.io.pipelinedMemoryBus -> (0x00020000l, 1 MB)
+    mainBusMapping += apbBridge.io.pipelinedMemoryBus -> (0x00020000l, 64 kB)
 
 	// user interface
 	val userInterface = PipelinedMemoryBusUserInterface(
@@ -291,10 +291,6 @@ case class VpSoc(config : AradexConfig) extends Component{
     val timer = new AradexApb3Timer()
     timerInterrupt setWhen(timer.io.interrupt)
     apbMapping += timer.io.apb     -> (0x4000, 4 kB)
-
-    val outputsMapping = List(
-      SizeMapping(0x8000, 0x400)
-    )
 
     //******** Memory mappings *********
     val apbDecoder = Apb3Decoder(
