@@ -125,12 +125,12 @@ object VpSoc {
     addressWidth = 16,
     dataWidth = 32
   )
-  
+
   val userIntfConfig = UserIntfConfig(
-    addressWidth = 8, 
+    addressWidth = 10,
     dataWidth = 32
   )
-  
+
   val dpramIntfConfig = DpramIntfConfig(
     addressWidth = 11,
     dataWidth = 32

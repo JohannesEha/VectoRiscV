@@ -237,7 +237,7 @@ object UserIntf{
 case class UserIntf(config: UserIntfConfig) extends Bundle with IMasterSlave {
 
   // outputs
-  val ADDR    = UInt(config.addressWidth bits)
+  val ADDR    = UInt(config.addressWidth-2 bits)
   val CS      = Bool()
   val READ    = Bool()
   val WRITE   = Bool()
@@ -283,7 +283,7 @@ case class PipelinedMemoryBusUserInterface(userIntfConfig: UserIntfConfig, pipel
   io.userIntf.CS      := pipelinedMemoryBusStage.cmd.valid
   io.userIntf.READ    := !pipelinedMemoryBusStage.cmd.write && state
   io.userIntf.WRITE   := pipelinedMemoryBusStage.cmd.write && state
-  io.userIntf.ADDR    := pipelinedMemoryBusStage.cmd.address.resized
+  io.userIntf.ADDR    := (pipelinedMemoryBusStage.cmd.address >> 2).resized 
   io.userIntf.WDATA   := pipelinedMemoryBusStage.cmd.data
 
   pipelinedMemoryBusStage.rsp.valid := False
