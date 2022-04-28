@@ -15,6 +15,7 @@ import vexriscv.plugin._
 import vexriscv.{VexRiscv, VexRiscvConfig, plugin}
 import spinal.lib.com.spi.ddr._
 import spinal.lib.bus.simple._
+import spinal.lib.com.i2c.{I2c, Apb3I2cCtrl, I2cMasterMemoryMappedGenerics, I2cSlaveGenerics, I2cSlaveMemoryMappedGenerics}
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.Seq
 
@@ -151,6 +152,9 @@ case class VpSoc(config : AradexConfig) extends Component{
 
     //Peripherals IO
     val uart = master(Uart())
+
+    //i2c interface
+    val i2c = master(I2c())
 
     //User interface
     val userIntf = master(UserIntf(VpSoc.userIntfConfig))
@@ -291,6 +295,21 @@ case class VpSoc(config : AradexConfig) extends Component{
     val timer = new AradexApb3Timer()
     timerInterrupt setWhen(timer.io.interrupt)
     apbMapping += timer.io.apb     -> (0x4000, 4 kB)
+    
+    val apb3I2cCtrl = new Apb3I2cCtrl(
+      I2cSlaveMemoryMappedGenerics(
+        ctrlGenerics = I2cSlaveGenerics(
+          samplingWindowSize = 3,
+          samplingClockDividerWidth = 10 bits,
+          timeoutWidth = 20 bits
+        ),
+        addressFilterCount = 4,
+        masterGenerics = I2cMasterMemoryMappedGenerics(
+          timerWidth = 16
+        )
+      )
+    )
+    apbMapping += apb3I2cCtrl.io.apb -> (0x5000, 1 kB)
 
     //******** Memory mappings *********
     val apbDecoder = Apb3Decoder(
@@ -309,6 +328,7 @@ case class VpSoc(config : AradexConfig) extends Component{
 	externalInterrupt setWhen io.extIRQ
 	io.userIntf <> userInterface.io.userIntf
 	io.dpramIntf <> dpram.io.dpram
+    io.i2c <> apb3I2cCtrl.io.i2c
   }
 }
 
