@@ -39,7 +39,7 @@ object AradexConfig{
     coreFrequency         = 80 MHz,
     onChipRamSize         = 48 kB,
 	dpRamSize             = 8 kB,
-    onChipRamHexFile      = "/mnt/g/Quartus/VP_Q20_VexRiskV/velogic/cpu/software/VP_app/mem_init/nios_code.hex",
+    onChipRamHexFile      = "hello_world.hex",
     pipelineDBus          = true,
     pipelineMainBus       = false,
     pipelineApbBridge     = true,
@@ -122,12 +122,12 @@ object AradexConfig{
 
 object VpSoc {
   val apb3Config = Apb3Config(
-    addressWidth = 20,
+    addressWidth = 16,
     dataWidth = 32
   )
   
   val userIntfConfig = UserIntfConfig(
-    addressWidth = 10, 
+    addressWidth = 8, 
     dataWidth = 32
   )
   
@@ -260,7 +260,7 @@ case class VpSoc(config : AradexConfig) extends Component{
       pipelineBridge = pipelineApbBridge,
       pipelinedMemoryBusConfig = pipelinedMemoryBusConfig
     )
-    mainBusMapping += apbBridge.io.pipelinedMemoryBus -> (0x00020000l, 1 MB)
+    mainBusMapping += apbBridge.io.pipelinedMemoryBus -> (0x00020000l, 64 kB)
 
 	// user interface
 	val userInterface = PipelinedMemoryBusUserInterface(
