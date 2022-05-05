@@ -39,12 +39,12 @@ object AradexConfig{
   def default(bigEndian : Boolean = false) =  AradexConfig(
     coreFrequency         = 80 MHz,
     onChipRamSize         = 48 kB,
-	dpRamSize             = 8 kB,
-    onChipRamHexFile      = "hello_world.hex",
+    dpRamSize             = 8 kB,
+    onChipRamHexFile      = "vp_app.hex",
     pipelineDBus          = true,
     pipelineMainBus       = false,
     pipelineApbBridge     = true,
-	pipelineUserIntf      = true,
+    pipelineUserIntf      = true,
     hardwareBreakpointCount = 0,
     cpuPlugins = ArrayBuffer( //DebugPlugin added by the toplevel
       new IBusSimplePlugin(
