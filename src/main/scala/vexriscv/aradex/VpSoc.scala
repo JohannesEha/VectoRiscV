@@ -21,7 +21,7 @@ import scala.collection.Seq
 
 case class AradexConfig(coreFrequency : HertzNumber,
                        onChipRamSize      : BigInt,
-					   dpRamSize          : BigInt,
+                       dpRamSize          : BigInt,
                        onChipRamHexFile   : String,
                        pipelineDBus       : Boolean,
                        pipelineMainBus    : Boolean,
@@ -36,11 +36,11 @@ case class AradexConfig(coreFrequency : HertzNumber,
 
 object AradexConfig{
   def default : AradexConfig = default(false)
-  def default(bigEndian : Boolean = false) =  AradexConfig(
+  def default(bigEndian : Boolean = false, onChipRamHexFile : String = "app.hex") =  AradexConfig(
     coreFrequency         = 80 MHz,
-    onChipRamSize         = 48 kB,
+    onChipRamSize         = 32 kB,
     dpRamSize             = 8 kB,
-    onChipRamHexFile      = "vp_app.hex",
+    onChipRamHexFile      = onChipRamHexFile,
     pipelineDBus          = true,
     pipelineMainBus       = false,
     pipelineApbBridge     = true,
@@ -332,9 +332,19 @@ case class VpSoc(config : AradexConfig) extends Component{
   }
 }
 
-object VpSocVhdl{
+object VpSocVhdl_vp{
   def main(args: Array[String]) {
-    SpinalVhdl(VpSoc(AradexConfig.default))
+    def config_vp = AradexConfig.default(onChipRamHexFile = "app_vp.hex")
+    def config_wp = AradexConfig.default(onChipRamHexFile = "app_wp.hex")
+    def config_vd5 = AradexConfig.default(onChipRamHexFile = "app_vd5.hex")
+    
+    SpinalConfig(mode=VHDL, targetDirectory="temp/VpSoc_vp").generate(VpSoc(config_vp))
+
+    SpinalConfig(mode=VHDL, targetDirectory="temp/VpSoc_vd5").generate(VpSoc(config_wp))
+
+    SpinalConfig(mode=VHDL, targetDirectory="temp/VpSoc_wp").generate(VpSoc(config_vd5))
+    
+    //SpinalVhdl(VpSoc(config))
   }
 }
 
