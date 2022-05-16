@@ -78,12 +78,7 @@ object AradexConfig{
       new FullBarrelShifterPlugin,
 	  new MulPlugin,
 	  new DivPlugin,
-	  // new MulDivIterativePlugin(
-        // genMul = true,
-        // genDiv = false,
-        // mulUnrollFactor = 1,
-        // divUnrollFactor = 1
-      // ),
+	  new IntSqrtPlugin,
       new HazardSimplePlugin(
         bypassExecute = false,			// true for higher speed
         bypassMemory = false,			// true
@@ -216,7 +211,7 @@ case class VpSoc(config : AradexConfig) extends Component{
     //Priority to dBus, !! cmd transactions can change on the fly !!
     val mainBusArbiter = new AradexMasterArbiter(pipelinedMemoryBusConfig, bigEndianDBus)
 
-    //Instanciate the CPU
+    //Instantiate the CPU
     val cpu = new VexRiscv(
       config = VexRiscvConfig(
         plugins = cpuPlugins += new DebugPlugin(debugClockDomain, hardwareBreakpointCount)
