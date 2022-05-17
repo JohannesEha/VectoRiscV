@@ -40,8 +40,7 @@ class IntSqrtPlugin extends Plugin[VexRiscv] {
       import memory._
       def area = this
 
-      val iterations = 16
-      val counter = Counter(16)
+      val counter = Counter(19)
       val done = Reg(Bool) setWhen(counter === counter.end-1) clearWhen(!arbitration.isStuck)
       val result = Reg(Bits(32 bits))
 
@@ -53,6 +52,8 @@ class IntSqrtPlugin extends Plugin[VexRiscv] {
       //Execute stage logic to drive memory stage's input regs
       when(!arbitration.isStuck){
         x := execute.input(RS1).asUInt
+        a := U(0)
+        q := U(0)
         counter.clear()
       }
 
@@ -74,7 +75,7 @@ class IntSqrtPlugin extends Plugin[VexRiscv] {
             q := (q @@ !t.msb).resized
           }.setCompositeName(area, "iteration")
 
-          when(counter === 18){
+          when(counter === counter.end-1){
             result := q.asBits.resized
           }
         }
