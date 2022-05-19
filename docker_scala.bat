@@ -1,5 +1,5 @@
 @echo off
-docker run -it --rm --network=none --volume=F:/VectoRiscV:/data spinalhdl sbt --batch -Dsbt.server.forcestart=true "runMain vexriscv.aradex.VpSocVhdl_vp test"
+docker run -it --rm --network=none --volume=F:/VectoRiscV:/data spinalhdl sbt --batch -Dsbt.server.forcestart=true "runMain vexriscv.aradex.VpSocVerilog"
 echo FINISHED!
-xcopy temp F:\20220425_VexRiscV\velogic\cpu\vexriskv_cpu\ /E/H/Y
+xcopy temp\VpSoc\VpSoc.v F:\20220425_VexRiscV\velogic\cpu\vexriskv_cpu\ /Y
 pause

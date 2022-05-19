@@ -76,6 +76,12 @@ case class AradexPipelinedMemoryBusRam(onChipRamSize : BigInt, onChipRamHexFile 
           ((word & 0xff0000l)   >> 8)  |
           ((word & 0xff000000l) >> 24)
   }
+  else
+  {
+    //init memory with zero
+    val initContent = Array.fill[BigInt](ram.wordCount)(0)
+    ram.initBigInt(initContent)
+  }
 }
 
 

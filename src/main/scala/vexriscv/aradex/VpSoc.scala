@@ -345,6 +345,7 @@ object VpSocVhdl_vp{
 
 object VpSocVerilog{
   def main(args: Array[String]) {
-    SpinalVerilog(VpSoc(AradexConfig.default))
+    def config_vp = AradexConfig.default(onChipRamHexFile = null)
+    SpinalConfig(mode=Verilog, targetDirectory="temp/VpSoc").generate(VpSoc(config_vp))
   }
 }
