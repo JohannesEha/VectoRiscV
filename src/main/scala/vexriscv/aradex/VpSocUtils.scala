@@ -169,20 +169,21 @@ object DpramInterface{
 
 case class DpramInterface(config: DpramIntfConfig) extends Bundle with IMasterSlave {
 
-  // outputs
+  // inputs
+  val CLOCK   = Bool()
   val ADDR    = UInt(config.addressWidth bits)
   val CS      = Bool()
   val WRITE   = Bool()
   val WDATA   = Bits(config.dataWidth bits)
   
-  // inputs
+  // outputs
   val RDATA   = Bits(config.dataWidth bits)
-  
+
   override def asMaster(): Unit = {
-    out(ADDR, CS, WRITE, WDATA)
+    out(CLOCK, ADDR, CS, WRITE, WDATA)
     in(RDATA)
   }
-  
+
   def << (sink: DpramInterface): Unit = sink >> this
 
   def >> (sink: DpramInterface): Unit = {
@@ -190,16 +191,26 @@ case class DpramInterface(config: DpramIntfConfig) extends Bundle with IMasterSl
     sink.CS     := this.CS
     sink.WRITE  := this.WRITE
     sink.WDATA  := this.WDATA
+    this.CLOCK  := sink.CLOCK
     this.RDATA  := sink.RDATA
   }
 }
 
+case class AradexPipelinedMemoryBusDPRam(
+                dpramIntfConfig           : DpramIntfConfig, 
+                dpRamSize                 : BigInt, 
+                pipelinedMemoryBusConfig  : PipelinedMemoryBusConfig, 
+                bigEndian                 : Boolean = false) extends Component{
 
-case class AradexPipelinedMemoryBusDPRam(dpramIntfConfig : DpramIntfConfig, dpRamSize : BigInt, pipelinedMemoryBusConfig : PipelinedMemoryBusConfig, bigEndian : Boolean = false) extends Component{
   val io = new Bundle{
     val bus = slave(PipelinedMemoryBus(pipelinedMemoryBusConfig))
-	val dpram = slave(DpramInterface(dpramIntfConfig))
+    val dpram = slave(DpramInterface(dpramIntfConfig))
   }
+
+  val dpramClockDomain = ClockDomain(
+    clock  = io.dpram.CLOCK,
+    config = ClockDomainConfig(clockEdge  = RISING)
+  )
 
   val a = new Area{
     val ram = Mem(Bits(32 bits), dpRamSize / 4)
@@ -214,16 +225,14 @@ case class AradexPipelinedMemoryBusDPRam(dpramIntfConfig : DpramIntfConfig, dpRa
       mask  = io.bus.cmd.mask
     )
     io.bus.cmd.ready := True
-    
-    val readData = 
-    ram.readWriteSync(
-      address = io.dpram.ADDR,
-	  data    = io.dpram.WDATA,
-	  enable  = True,
-	  write   = io.dpram.WRITE && io.dpram.CS
-    )
 
-    io.dpram.RDATA	:= readData
+    val myArea = new ClockingArea(dpramClockDomain) {
+      io.dpram.RDATA  := ram.readWriteSync(
+                            address = io.dpram.ADDR,
+                            data    = io.dpram.WDATA,
+                            enable  = True,
+                            write   = io.dpram.WRITE && io.dpram.CS)
+    }
   }
 }
 

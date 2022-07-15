@@ -76,14 +76,14 @@ object AradexConfig{
         executeInsertion = false
       ),
       new FullBarrelShifterPlugin,
-	  new MulPlugin,
-	  new DivPlugin,
-	  new IntSqrtPlugin,
+      new MulPlugin,
+      new DivPlugin,
+      new IntSqrtPlugin,
       new HazardSimplePlugin(
-        bypassExecute = false,			// true for higher speed
-        bypassMemory = false,			// true
-        bypassWriteBack = false,		// true
-        bypassWriteBackBuffer = false,	// true
+        bypassExecute = false,          // true for higher speed
+        bypassMemory = false,           // true
+        bypassWriteBack = false,        // true
+        bypassWriteBackBuffer = false,  // true
         pessimisticUseSrc = false,
         pessimisticWriteRegFile = false,
         pessimisticAddressMatch = false
@@ -153,11 +153,11 @@ case class VpSoc(config : AradexConfig) extends Component{
 
     //User interface
     val userIntf = master(UserIntf(VpSoc.userIntfConfig))
-	val extIRQ = in Bool()
-	
-	//DPRAM
+      val extIRQ = in Bool()
+
+      //DPRAM
     val dpramIntf = slave(DpramInterface(VpSoc.dpramIntfConfig))
-}
+  }
 
 
   val resetCtrlClockDomain = ClockDomain(
@@ -263,22 +263,22 @@ case class VpSoc(config : AradexConfig) extends Component{
     )
     mainBusMapping += apbBridge.io.pipelinedMemoryBus -> (0x00020000l, 64 kB)
 
-	// user interface
-	val userInterface = PipelinedMemoryBusUserInterface(
-	  userIntfConfig = VpSoc.userIntfConfig, 
-	  pipelineBridge = pipelineUserIntf,
-	  pipelinedMemoryBusConfig = pipelinedMemoryBusConfig
+    // user interface
+    val userInterface = PipelinedMemoryBusUserInterface(
+      userIntfConfig = VpSoc.userIntfConfig, 
+      pipelineBridge = pipelineUserIntf,
+      pipelinedMemoryBusConfig = pipelinedMemoryBusConfig
     )
-	mainBusMapping += userInterface.io.pipelinedMemoryBus -> (0x00030000l, 1 kB)
+    mainBusMapping += userInterface.io.pipelinedMemoryBus -> (0x00030000l, 1 kB)
 
-	//DPRAM
-	val dpram = AradexPipelinedMemoryBusDPRam(
-	  dpramIntfConfig = VpSoc.dpramIntfConfig,
-      dpRamSize = dpRamSize,
-      pipelinedMemoryBusConfig = pipelinedMemoryBusConfig,
-      bigEndian = bigEndianDBus
-	)
-	mainBusMapping += dpram.io.bus -> (0x00040000l, dpRamSize)
+    //DPRAM
+    val dpram = AradexPipelinedMemoryBusDPRam(
+        dpramIntfConfig           = VpSoc.dpramIntfConfig,
+        dpRamSize                 = dpRamSize,
+        pipelinedMemoryBusConfig  = pipelinedMemoryBusConfig,
+        bigEndian                 = bigEndianDBus
+    )
+    mainBusMapping += dpram.io.bus -> (0x00040000l, dpRamSize)
 
     //******** APB peripherals *********
     val apbMapping = ArrayBuffer[(Apb3, SizeMapping)]()
@@ -290,7 +290,7 @@ case class VpSoc(config : AradexConfig) extends Component{
     val timer = new AradexApb3Timer()
     timerInterrupt setWhen(timer.io.interrupt)
     apbMapping += timer.io.apb     -> (0x4000, 4 kB)
-    
+
     val apb3I2cCtrl = new Apb3I2cCtrl(
       I2cSlaveMemoryMappedGenerics(
         ctrlGenerics = I2cSlaveGenerics(
@@ -319,10 +319,10 @@ case class VpSoc(config : AradexConfig) extends Component{
         pipelineMaster = pipelineMainBus
       )
     }
-	
-	externalInterrupt setWhen io.extIRQ
-	io.userIntf <> userInterface.io.userIntf
-	io.dpramIntf <> dpram.io.dpram
+
+    externalInterrupt setWhen io.extIRQ
+    io.userIntf <> userInterface.io.userIntf
+    io.dpramIntf <> dpram.io.dpram
     io.i2c <> apb3I2cCtrl.io.i2c
   }
 }
