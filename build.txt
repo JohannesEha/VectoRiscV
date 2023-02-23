@@ -1,0 +1,12 @@
+to generate verilog HDL code, run the following command line in wsl:
+
+> sbt "runMain vexriscv.aradex.VpSocVerilog"
+
+Resulting verilog code is written to:
+.\temp\VpSoc
+
+
+
+To generate VHDL, use this command (hex files must be located in main directory):
+
+> sbt "runMain vexriscv.aradex.VpSocVhdl_vp"
