@@ -41,7 +41,9 @@ case class MmuPortConfig(portTlbSize : Int, latency : Int = 0, earlyRequireMmuLo
 class MmuPlugin(ioRange : UInt => Bool,
                 virtualRange : UInt => Bool = address => True,
 //                allowUserIo : Boolean = false,
-                enableMmuInMachineMode : Boolean = false) extends Plugin[VexRiscv] with MemoryTranslator {
+                enableMmuInMachineMode : Boolean = false,
+                exportSatp: Boolean = false
+                ) extends Plugin[VexRiscv] with MemoryTranslator {
 
   var dBusAccess : DBusAccess = null
   val portsInfo = ArrayBuffer[MmuPort]()
@@ -69,7 +71,7 @@ class MmuPlugin(ioRange : UInt => Bool,
     import pipeline._
     import pipeline.config._
     import Riscv._
-    val csrService = pipeline.service(classOf[CsrInterface])
+    val csrService = pipeline.service(classOf[CsrPlugin])
 
     //Sorted by priority
     val sortedPortsInfo = portsInfo.sortBy(_.priority)
@@ -89,11 +91,15 @@ class MmuPlugin(ioRange : UInt => Bool,
     val csr = pipeline plug new Area{
       val status = new Area{
         val sum, mxr, mprv = RegInit(False)
+        mprv clearWhen(csrService.xretAwayFromMachine)
       }
       val satp = new Area {
         val mode = RegInit(False)
         val asid = Reg(Bits(9 bits))
-        val ppn = Reg(UInt(20 bits))
+        val ppn = Reg(UInt(22 bits)) // Bottom 20 bits are used in implementation, but top 2 bits are still stored for OS use.
+        if(exportSatp) {
+          out(mode, asid, ppn)
+        }
       }
 
       for(offset <- List(CSR.MSTATUS, CSR.SSTATUS)) csrService.rw(offset, 19 -> status.mxr, 18 -> status.sum, 17 -> status.mprv)
@@ -232,7 +238,8 @@ class MmuPlugin(ioRange : UInt => Bool,
           }
           is(State.L1_CMD){
             dBusAccess.cmd.valid := True
-            dBusAccess.cmd.address := csr.satp.ppn @@ vpn(1) @@ U"00"
+            // RV spec allows for 34-bit phys address in Sv32 mode; we only implement 32 bits and ignore the top 2 bits of satp.
+            dBusAccess.cmd.address := csr.satp.ppn(19 downto 0) @@ vpn(1) @@ U"00"
             when(dBusAccess.cmd.ready){
               state := State.L1_RSP
             }

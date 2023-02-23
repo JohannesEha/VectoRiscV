@@ -171,12 +171,12 @@ class DBusCachedPlugin(val config : DataCacheConfig,
 
     decoderService.addDefault(MEMORY_ENABLE, False)
     decoderService.add(
-      List(LB, LH, LW, LBU, LHU, LWU).map(_ -> loadActions) ++
+      List(LB, LH, LW, LBU, LHU).map(_ -> loadActions) ++
       List(SB, SH, SW).map(_ -> storeActions)
     )
 
     if(withLrSc){
-      List(LB, LH, LW, LBU, LHU, LWU, SB, SH, SW).foreach(e =>
+      List(LB, LH, LW, LBU, LHU, SB, SH, SW).foreach(e =>
         decoderService.add(e, Seq(MEMORY_LRSC -> False))
       )
       decoderService.add(
@@ -199,7 +199,7 @@ class DBusCachedPlugin(val config : DataCacheConfig,
     }
 
     if(withAmo){
-      List(LB, LH, LW, LBU, LHU, LWU, SB, SH, SW).foreach(e =>
+      List(LB, LH, LW, LBU, LHU, SB, SH, SW).foreach(e =>
         decoderService.add(e, Seq(MEMORY_AMO -> False))
       )
       val amoActions = storeActions.filter(_._1 != SRC2_CTRL) ++ Seq(
@@ -228,7 +228,8 @@ class DBusCachedPlugin(val config : DataCacheConfig,
 
     decoderService.addDefault(MEMORY_MANAGMENT, False)
     decoderService.add(MANAGEMENT, List(
-      MEMORY_MANAGMENT -> True
+      MEMORY_MANAGMENT -> True,
+      RS1_USE -> True
     ))
 
     withWriteResponse match {
@@ -295,7 +296,7 @@ class DBusCachedPlugin(val config : DataCacheConfig,
 
     pipeline plug new Area{
       //Memory bandwidth counter
-      val rspCounter = RegInit(UInt(32 bits)) init(0)
+      val rspCounter = Reg(UInt(32 bits)) init(0)
       when(dBus.rsp.valid){
         rspCounter := rspCounter + 1
       }
@@ -343,6 +344,8 @@ class DBusCachedPlugin(val config : DataCacheConfig,
       }
 
       cache.io.cpu.flush.valid := arbitration.isValid && input(MEMORY_MANAGMENT)
+      cache.io.cpu.flush.singleLine := input(INSTRUCTION)(Riscv.rs1Range) =/= 0
+      cache.io.cpu.flush.lineId := U(input(RS1) >> log2Up(bytePerLine)).resized
       cache.io.cpu.execute.args.totalyConsistent := input(MEMORY_FORCE_CONSTISTENCY)
       arbitration.haltItself setWhen(cache.io.cpu.flush.isStall || cache.io.cpu.execute.haltIt)
 
@@ -368,7 +371,7 @@ class DBusCachedPlugin(val config : DataCacheConfig,
         insert(MEMORY_VIRTUAL_ADDRESS) := cache.io.cpu.execute.address
         memory.input(MEMORY_VIRTUAL_ADDRESS)
         if(writeBack != null) addPrePopTask( () =>
-          KeepAttribute(memory.input(MEMORY_VIRTUAL_ADDRESS).getDrivingReg)
+          KeepAttribute(memory.input(MEMORY_VIRTUAL_ADDRESS).getDrivingReg())
         )
       }
     }
@@ -525,14 +528,14 @@ class DBusCachedPlugin(val config : DataCacheConfig,
       dBusAccess.rsp.error := cache.io.cpu.writeBack.unalignedAccess || cache.io.cpu.writeBack.accessError
       dBusAccess.rsp.redo := cache.io.cpu.redo
       component.addPrePopTask{() =>
-        managementStage.input(IS_DBUS_SHARING).getDrivingReg clearWhen(dBusAccess.rsp.fire)
+        managementStage.input(IS_DBUS_SHARING).getDrivingReg() clearWhen(dBusAccess.rsp.fire)
         when(forceDatapath){
           execute.output(REGFILE_WRITE_DATA) := dBusAccess.cmd.address.asBits
         }
         if(mmuAndBufferStage != execute) mmuAndBufferStage.input(IS_DBUS_SHARING) init(False)
         managementStage.input(IS_DBUS_SHARING) init(False)
         when(dBusAccess.rsp.valid){
-          managementStage.input(IS_DBUS_SHARING).getDrivingReg := False
+          managementStage.input(IS_DBUS_SHARING).getDrivingReg() := False
         }
       }
     }

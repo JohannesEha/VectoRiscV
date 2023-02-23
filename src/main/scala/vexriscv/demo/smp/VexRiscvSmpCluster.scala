@@ -192,27 +192,31 @@ object VexRiscvSmpClusterGen {
                      dTlbSize : Int = 4,
                      prediction : BranchPrediction = vexriscv.plugin.NONE,
                      withDataCache : Boolean = true,
-                     withInstructionCache : Boolean = true
+                     withInstructionCache : Boolean = true,
+                     forceMisa : Boolean = false,
+                     forceMscratch : Boolean = false,
+                     privilegedDebug : Boolean = false
                     ) = {
     assert(iCacheSize/iCacheWays <= 4096, "Instruction cache ways can't be bigger than 4096 bytes")
     assert(dCacheSize/dCacheWays <= 4096, "Data cache ways can't be bigger than 4096 bytes")
     assert(!(withDouble && !withFloat))
 
+    val misa = Riscv.misaToInt(s"ima${if(withFloat) "f" else ""}${if(withDouble) "d" else ""}${if(rvc) "c" else ""}${if(withSupervisor) "s" else ""}")
     val csrConfig = if(withSupervisor){
-      CsrPluginConfig.openSbi(mhartid = hartId, misa = Riscv.misaToInt(s"ima${if(withFloat) "f" else ""}${if(withDouble) "d" else ""}s")).copy(utimeAccess = CsrAccess.READ_ONLY)
+      CsrPluginConfig.openSbi(mhartid = hartId, misa = misa).copy(utimeAccess = CsrAccess.READ_ONLY, withPrivilegedDebug = privilegedDebug)
     } else {
       CsrPluginConfig(
         catchIllegalAccess = true,
         mvendorid      = null,
         marchid        = null,
         mimpid         = null,
-        mhartid        = 0,
-        misaExtensionsInit = 0,
-        misaAccess     = CsrAccess.NONE,
+        mhartid        = hartId,
+        misaExtensionsInit = misa,
+        misaAccess     = if(forceMisa) CsrAccess.WRITE_ONLY else CsrAccess.NONE,
         mtvecAccess    = CsrAccess.READ_WRITE,
         mtvecInit      = null,
         mepcAccess     = CsrAccess.READ_WRITE,
-        mscratchGen    = false,
+        mscratchGen    = forceMscratch,
         mcauseAccess   = CsrAccess.READ_ONLY,
         mbadaddrAccess = CsrAccess.READ_ONLY,
         mcycleAccess   = CsrAccess.NONE,
@@ -221,7 +225,8 @@ object VexRiscvSmpClusterGen {
         ebreakGen      = true,
         wfiGenAsWait   = false,
         wfiGenAsNop    = true,
-        ucycleAccess   = CsrAccess.NONE
+        ucycleAccess   = CsrAccess.NONE,
+        withPrivilegedDebug = privilegedDebug
       )
     }
     val config = VexRiscvConfig(
